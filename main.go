@@ -33,8 +33,7 @@ func main() {
 	buf := make([]byte, 256)
 	scanner := bufio.NewScanner(os.Stdin)
 
-	for value := 0; ; {
-		value++
+	for {
 		go func() {
 			for scanner.Scan() {
 				_, err := s.Write([]byte(scanner.Text()))
