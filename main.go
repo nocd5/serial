@@ -12,7 +12,7 @@ import (
 
 type Options struct {
 	Port string `short:"p" long:"port" description:"Serial Port"`
-	Baud int   `short:"b" long:"baud" description:"Baud Rate"`
+	Baud int    `short:"b" long:"baud" description:"Baud Rate"`
 }
 
 var opts Options
