@@ -11,8 +11,8 @@ import (
 )
 
 type Options struct {
-	Port string `short:"p" long:"port" description:"Serial Port"`
-	Baud int    `short:"b" long:"baud" description:"Baud Rate"`
+	Port string `short:"p" long:"port" description:"Serial Port" required:"true"`
+	Baud int    `short:"b" long:"baud" description:"Baud Rate" required:"true"`
 }
 
 var opts Options
