@@ -23,28 +23,28 @@ func main() {
 		os.Exit(1)
 	}
 
-	c := &serial.Config{Name: opts.Port, Baud: opts.Baud}
-	s, err := serial.OpenPort(c)
+	config := &serial.Config{Name: opts.Port, Baud: opts.Baud}
+	port, err := serial.OpenPort(config)
+	defer port.Close()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	done := make(chan bool)
-	buf := make([]byte, 256)
-	scanner := bufio.NewScanner(os.Stdin)
+	go func() {
+		scanner := bufio.NewScanner(os.Stdin)
+		for scanner.Scan() {
+			_, err := port.Write([]byte(scanner.Text()))
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
+	}()
 
+	buf := make([]byte, 128)
+	done := make(chan bool)
 	for {
 		go func() {
-			for scanner.Scan() {
-				_, err := s.Write([]byte(scanner.Text()))
-				if err != nil {
-					log.Fatal(err)
-				}
-			}
-		}()
-
-		go func() {
-			n, err := s.Read(buf)
+			n, err := port.Read(buf)
 			if err != nil {
 				log.Fatal(err)
 			}
