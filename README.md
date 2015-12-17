@@ -19,3 +19,7 @@ CLI tool for serial port connection
   Parity Mode. `none`, `even` or `odd`. default **none**
 *      --stop  
   Number of Stop Bits. default **1**
+
+### Others
+* -l / --list  
+  List COM Ports (**Windows Only**)

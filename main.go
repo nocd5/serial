@@ -12,12 +12,13 @@ import (
 
 type Options struct {
 	// required
-	PortName string `short:"p" long:"port" description:"Serial Port" required:"true"`
-	BaudRate uint   `short:"b" long:"baud" description:"Baud Rate" required:"true"`
+	PortName string `short:"p" long:"port" description:"Serial Port"`
+	BaudRate uint   `short:"b" long:"baud" description:"Baud Rate"`
 	// optional
-	DataBits   uint   `long:"data" description:"Number of Data Bits" default:"8"`
-	ParityMode string `long:"parity" description:"Parity Mode. none/even/odd" default:"none"`
-	StopBits   uint   `long:"stop" description:"Number of Stop Bits" default:"1"`
+	DataBits     uint   `long:"data" description:"Number of Data Bits" default:"8"`
+	ParityMode   string `long:"parity" description:"Parity Mode. none/even/odd" default:"none"`
+	StopBits     uint   `long:"stop" description:"Number of Stop Bits" default:"1"`
+	ListComPorts bool   `short:"l" long:"list" description:"List COM Ports"`
 }
 
 var opts Options
@@ -25,6 +26,16 @@ var opts Options
 func main() {
 	_, err := flags.Parse(&opts)
 	if err != nil {
+		os.Exit(1)
+	}
+
+	if opts.ListComPorts {
+		listComPorts()
+		os.Exit(0)
+	}
+
+	if opts.PortName == "" || opts.BaudRate == 0 {
+		fmt.Fprintln(os.Stderr, "the required flags `/b, /baud' and `/p, /port' were not specified")
 		os.Exit(1)
 	}
 
