@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strconv"
+	"strings"
 
 	"github.com/jacobsa/go-serial/serial"
 	"github.com/jessevdk/go-flags"
@@ -19,6 +21,7 @@ type Options struct {
 	ParityMode   string `long:"parity" description:"Parity Mode. none/even/odd" default:"none"`
 	StopBits     uint   `long:"stop" description:"Number of Stop Bits" default:"1"`
 	ListComPorts bool   `short:"l" long:"list" description:"List COM Ports"`
+	BinaryMode   bool   `short:"y" long:"binary" description:"Binary Mode"`
 }
 
 var opts Options
@@ -70,9 +73,14 @@ func main() {
 	go func() {
 		scanner := bufio.NewScanner(os.Stdin)
 		for scanner.Scan() {
-			_, err := port.Write([]byte(scanner.Text()))
-			if err != nil {
-				log.Fatal(err)
+			if opts.BinaryMode {
+				if _, err := port.Write(getBytes(scanner.Text())); err != nil {
+					log.Fatal(err)
+				}
+			} else {
+				if _, err := port.Write([]byte(scanner.Text())); err != nil {
+					log.Fatal(err)
+				}
 			}
 		}
 	}()
@@ -92,4 +100,17 @@ func main() {
 		}()
 		<-done
 	}
+}
+
+func getBytes(src string) []byte {
+	var result []byte
+	bytes := strings.Split(src, " ")
+	for i := range bytes {
+		val, _ := strconv.ParseInt(bytes[i], 0, 0)
+		for 0 < val {
+			result = append(result, byte(val&0xFF))
+			val = val >> 8
+		}
+	}
+	return result
 }

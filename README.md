@@ -10,7 +10,7 @@ CLI tool for serial port connection
 * -p / --port  
   Port Name
 * -b / --baud  
-  Baud Rate  
+  Baud Rate
 
 ### Optional
 *      --data  
@@ -19,6 +19,19 @@ CLI tool for serial port connection
   Parity Mode. `none`, `even` or `odd`. default **none**
 *      --stop  
   Number of Stop Bits. default **1**
+
+* -y / --binary  
+  Binary Mode  
+  parse input string as byte array
+
+  ##### example
+  ```
+  0x56 0x78 0x9ABC
+
+  is interpreted as  
+
+  [0x56, 0x78, 0xBC, 0x9A]
+  ```
 
 ### Others
 * -l / --list  
