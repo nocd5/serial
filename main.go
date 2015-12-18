@@ -73,14 +73,16 @@ func main() {
 	go func() {
 		scanner := bufio.NewScanner(os.Stdin)
 		for scanner.Scan() {
+			var bytes []byte
 			if opts.BinaryMode {
-				if _, err := port.Write(getBytes(scanner.Text())); err != nil {
-					log.Fatal(err)
+				if bytes, err = getBytes(scanner.Text()); err != nil {
+					log.Println(err)
 				}
 			} else {
-				if _, err := port.Write([]byte(scanner.Text())); err != nil {
-					log.Fatal(err)
-				}
+				bytes = []byte(scanner.Text())
+			}
+			if _, err := port.Write(bytes); err != nil {
+				log.Fatal(err)
 			}
 		}
 	}()
@@ -102,15 +104,20 @@ func main() {
 	}
 }
 
-func getBytes(src string) []byte {
+func getBytes(src string) ([]byte, error) {
 	var result []byte
-	bytes := strings.Split(src, " ")
+	var err error
+	bytes := strings.FieldsFunc(src, func(r rune) bool { return r == ' ' })
+	var val int64
 	for i := range bytes {
-		val, _ := strconv.ParseInt(bytes[i], 0, 0)
-		for 0 < val {
+		val, err = strconv.ParseInt(bytes[i], 0, 0)
+		for {
 			result = append(result, byte(val&0xFF))
 			val = val >> 8
+			if val <= 0 {
+				break
+			}
 		}
 	}
-	return result
+	return result, err
 }
