@@ -72,26 +72,8 @@ func main() {
 	}
 
 	go func() {
-		scanner := bufio.NewScanner(os.Stdin)
-		for scanner.Scan() {
-			var bytes []byte
-			if opts.TxBin {
-				if bytes, err = getBytes(scanner.Text()); err != nil {
-					log.Println(err)
-				}
-			} else {
-				bytes = []byte(scanner.Text())
-			}
-			if _, err := port.Write(bytes); err != nil {
-				log.Fatal(err)
-			}
-		}
-	}()
-
-	buf := make([]byte, 128)
-	done := make(chan bool)
-	for {
-		go func() {
+		buf := make([]byte, 128)
+		for {
 			n, err := port.Read(buf)
 			if err != nil {
 				log.Fatal(err)
@@ -105,9 +87,22 @@ func main() {
 					fmt.Fprintf(os.Stdout, "%s", buf[:n])
 				}
 			}
-			done <- true
-		}()
-		<-done
+		}
+	}()
+
+	scanner := bufio.NewScanner(os.Stdin)
+	for scanner.Scan() {
+		var bytes []byte
+		if opts.TxBin {
+			if bytes, err = getBytes(scanner.Text()); err != nil {
+				log.Println(err)
+			}
+		} else {
+			bytes = []byte(scanner.Text())
+		}
+		if _, err := port.Write(bytes); err != nil {
+			log.Fatal(err)
+		}
 	}
 }
 
