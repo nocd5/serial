@@ -20,9 +20,9 @@ CLI tool for serial port connection
 *      --stop  
   Number of Stop Bits. default **1**
 
-* -y / --binary  
-  Binary Mode  
-  parse input string as byte array
+* -y / --txbin  
+  Binary Send Mode  
+  parse send string as byte array
 
   ##### example
   ```
@@ -32,6 +32,13 @@ CLI tool for serial port connection
 
   [0x56, 0x78, 0xBC, 0x9A]
   ```
+
+* -Y / --rxbin  
+  Binary Receive Mode  
+  print receive data in HEX format
+
+  ##### example
+  if receive character 'A', "0x41" is shown
 
 ### Others
 * -l / --list  

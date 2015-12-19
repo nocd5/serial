@@ -21,7 +21,8 @@ type Options struct {
 	ParityMode   string `long:"parity" description:"Parity Mode. none/even/odd" default:"none"`
 	StopBits     uint   `long:"stop" description:"Number of Stop Bits" default:"1"`
 	ListComPorts bool   `short:"l" long:"list" description:"List COM Ports"`
-	BinaryMode   bool   `short:"y" long:"binary" description:"Binary Mode"`
+	TxBin        bool   `short:"y" long:"txbin" description:"Binary Send Mode"`
+	RxBin        bool   `short:"Y" long:"rxbin" description:"Binary Receive Mode"`
 }
 
 var opts Options
@@ -74,7 +75,7 @@ func main() {
 		scanner := bufio.NewScanner(os.Stdin)
 		for scanner.Scan() {
 			var bytes []byte
-			if opts.BinaryMode {
+			if opts.TxBin {
 				if bytes, err = getBytes(scanner.Text()); err != nil {
 					log.Println(err)
 				}
@@ -95,8 +96,14 @@ func main() {
 			if err != nil {
 				log.Fatal(err)
 			}
-			if n > 0 {
-				fmt.Fprintf(os.Stdout, "%s", buf[:n])
+			if opts.RxBin {
+				for i := 0; i < n; i++ {
+					fmt.Fprintf(os.Stdout, "0x%02X ", buf[i])
+				}
+			} else {
+				if n > 0 {
+					fmt.Fprintf(os.Stdout, "%s", buf[:n])
+				}
 			}
 			done <- true
 		}()
