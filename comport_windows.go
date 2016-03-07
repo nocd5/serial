@@ -28,7 +28,7 @@ func listComPorts() {
 	defer service.Release()
 
 	// result is a SWBemObjectSet
-	resultRaw, _ := oleutil.CallMethod(service, "ExecQuery", "SELECT * FROM WIN32_SerialPort")
+	resultRaw, _ := oleutil.CallMethod(service, "ExecQuery", "SELECT * FROM Win32_PnPEntity WHERE Name LIKE '%(COM%)'")
 	result := resultRaw.ToIDispatch()
 	defer result.Release()
 
@@ -44,7 +44,6 @@ func listComPorts() {
 		defer item.Release()
 
 		property, _ := oleutil.GetProperty(item, "Name")
-
 		port := re.FindAllStringSubmatch(property.ToString(), -1)
 		ports = append(ports, port[0][1:3])
 	}
