@@ -2,60 +2,103 @@ package main
 
 import (
 	"fmt"
+	"log"
+	"math"
 	"regexp"
+	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/go-ole/go-ole"
 	"github.com/go-ole/go-ole/oleutil"
 )
 
-// copy & paste from
-// http://stackoverflow.com/questions/20365286/query-wmi-from-go
 func listComPorts() {
 	// init COM
 	ole.CoInitialize(0)
 	defer ole.CoUninitialize()
 
-	unknown, _ := oleutil.CreateObject("WbemScripting.SWbemLocator")
-	defer unknown.Release()
+	locator, err := oleutil.CreateObject("WbemScripting.SWbemLocator")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer locator.Release()
 
-	wmi, _ := unknown.QueryInterface(ole.IID_IDispatch)
+	wmi, err := locator.QueryInterface(ole.IID_IDispatch)
+	if err != nil {
+		log.Fatal(err)
+	}
 	defer wmi.Release()
 
 	// service is a SWbemServices
-	serviceRaw, _ := oleutil.CallMethod(wmi, "ConnectServer")
+	serviceRaw, err := oleutil.CallMethod(wmi, "ConnectServer")
+	if err != nil {
+		log.Fatal(err)
+	}
 	service := serviceRaw.ToIDispatch()
 	defer service.Release()
 
 	// result is a SWBemObjectSet
-	resultRaw, _ := oleutil.CallMethod(service, "ExecQuery", "SELECT * FROM Win32_PnPEntity WHERE Name LIKE '%(COM%)'")
+	resultRaw, err := oleutil.CallMethod(service, "ExecQuery", "SELECT * FROM Win32_PnPEntity WHERE Name LIKE '%(COM%)'")
+	if err != nil {
+		log.Fatal(err)
+	}
 	result := resultRaw.ToIDispatch()
 	defer result.Release()
 
-	countVar, _ := oleutil.GetProperty(result, "Count")
+	countVar, err := oleutil.GetProperty(result, "Count")
+	if err != nil {
+		log.Fatal(err)
+	}
 	count := int(countVar.Val)
 
-	var ports [][]string
-	re := regexp.MustCompile(`(.*) \((.*?)\)$`)
+	var ports Ports
+	re := regexp.MustCompile(`(.*) \(COM(\d+)\)$`)
 	for i := 0; i < count; i++ {
 		// item is a SWbemObject, but really a Win32_Process
-		itemRaw, _ := oleutil.CallMethod(result, "ItemIndex", i)
+		itemRaw, err := oleutil.CallMethod(result, "ItemIndex", i)
+		if err != nil {
+			continue
+		}
 		item := itemRaw.ToIDispatch()
 		defer item.Release()
 
-		property, _ := oleutil.GetProperty(item, "Name")
+		property, err := oleutil.GetProperty(item, "Name")
+		if err != nil {
+			continue
+		}
 		port := re.FindAllStringSubmatch(property.ToString(), -1)
-		ports = append(ports, port[0][1:3])
+		num, _ := strconv.Atoi(port[0][2])
+		ports = append(ports, Port{num, port[0][1]})
 	}
 
-	// " " pading
-	maxlen := 0
+	sort.Sort(ports)
+
+	digit := getDigit(ports[len(ports)-1].Number)
 	for i := 0; i < len(ports); i++ {
-		if maxlen < len(ports[i][1]) {
-			maxlen = len(ports[i][1])
-		}
+		fmt.Println("COM" + strconv.Itoa(ports[i].Number) + strings.Repeat(" ", digit-getDigit(ports[i].Number)) + " : " + ports[i].Name)
 	}
-	for i := 0; i < len(ports); i++ {
-		fmt.Println(ports[i][1] + strings.Repeat(" ", maxlen-len(ports[i][1])+1) + ": " + ports[i][0])
-	}
+}
+
+func getDigit(num int) int {
+	return int(math.Log10(float64(num))) + 1
+}
+
+type Port struct {
+	Number int
+	Name   string
+}
+
+type Ports []Port
+
+func (p Ports) Len() int {
+	return len(p)
+}
+
+func (p Ports) Swap(i, j int) {
+	p[i], p[j] = p[j], p[i]
+}
+
+func (p Ports) Less(i, j int) bool {
+	return p[i].Number < p[j].Number
 }
